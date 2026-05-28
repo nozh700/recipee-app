@@ -184,46 +184,104 @@ searchBtn.addEventListener('click', (e) => {
   }
 });
 
-//Function to open recipe popup
-const openRecipePopup=(meal)=>{
-  //Extract YouTube video ID from meal.strYoutube
-  const videoId=meal.strYoutube.split('v=')[1];
-  const embedUrl=`https://www.youtube.com/embed/${videoId}`;
+// Function to open recipe popup
+const openRecipePopup = (meal) => {
+  // Extract YouTube video ID from meal.strYoutube
+  const videoId = meal.strYoutube.split('v=')[1];
+  const embedUrl = `https://www.youtube.com/embed/${videoId}`;
 
-  recipeDetailsContent.innerHTML=`
-  <h2 class="recipename">${meal.strMeal}</h2>
-  <h3>Ingredients</h3>
-  <ul class="ingredientlist">${fetchIngredients(meal)}</ul>
-  <div id="imgset">
-      <img src="${meal.strMealThumb}" alt="${meal.strMeal};">
-  </div>
-  <div id="insset">  
-      <h3>Instructions</h3>
-      <p class="recipeInstruction">${meal.strInstructions}</p>
-  </div>
-  <iframe id="videoset" width=600 height="400" src="${embedUrl}" frameborder="0" allowfllScreen> </iframe>
-  `;
-  recipeDetailsContent.parentElement.style.display='block';
+  recipeDetailsContent.innerHTML = `
+    <h2 class="recipename">${meal.strMeal}</h2>
+    <h3>Ingredients</h3>
+    <ul class="ingredientlist">${fetchIngredients(meal)}</ul>
+    <div id="imgset">
+        <img src="${meal.strMealThumb}" alt="${meal.strMeal};">
+    </div>
+    <div id="insset">
+        <h3>Instructions</h3>
+        <p class="recipeInstruction">${meal.strInstructions}</p>
+    </div>
+    <iframe id="videoset" width="600" height="400" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>
+    `;
+  recipeDetailsContent.parentElement.style.display = 'block';
 };
 
-const fetchIngredients=(meal)=>{
-  let ingredientList='';
-  for(let i=1;i<=20;i++){
-    const ingredient=meal[`strIngredient${i}`];
-    if(ingredient){
-      const measure=meal[`strMeasure${i}`];
-      ingredientList+=`<li>${measure} ${ingredient}</li>`;
-    }else{
+// Function to fetch ingredients and measurements
+const fetchIngredients = (meal) => {
+  let ingredientList = '';
+  for (let i = 1; i <= 20; i++) {
+    const ingredient = meal[`strIngredient${i}`];
+    if (ingredient) {
+      const measure = meal[`strMeasure${i}`];
+      ingredientList += `<li>${measure} ${ingredient}</li>`;
+    } else {
       break;
     }
   }
   return ingredientList;
 };
 
-//working of close button 
-recipeCloseBtn.addEventListener('click',()=>{
-  recipeDetailsContent.parentElement.style.display="none";
+// Function to close recipe popup
+recipeCloseBtn.addEventListener('click', () => {
+  recipeDetailsContent.parentElement.style.display = 'none';
+});
+// Function to save recipe to local storage
+const saveToFavorites = (meal) => {
+  let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+  favorites.push(meal);
+  localStorage.setItem('favorites', JSON.stringify(favorites));
+  console.log('Recipe saved to favorites:', meal);
+  alert('Recipe added to favorites!');
+  displayFavoriteRecipes();
+};
+favoriteBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  showFavoritePopup();
+});
+const showFavoritePopup = () => {
+  favoritePopup.style.display = 'block';
+  displayFavoriteRecipes();
+};
+favoritePopupCloseBtn.addEventListener('click', () => {
+  favoritePopup.style.display = 'none';
 });
 
+const displayFavoriteRecipes = () => {
+  favoriteRecipesContainer.innerHTML = '';
+  const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+  favorites.forEach((meal) => {
+    const recipeDiv = document.createElement('div');
+    recipeDiv.classList.add('recipe');
+    recipeDiv.innerHTML = `
+            <img src="${meal.strMealThumb}" alt="${meal.strMeal}">
+            <h3>${meal.strMeal}</h3>
+            <p><span>${meal.strArea}</span> Dish</p>
+            <p>Belongs To <span>${meal.strCategory}</span> Category</p>
+        `;
+    const button1 = document.createElement('button');
+    button1.textContent = 'View Recipe';
+    button1.classList.add('colorful-button'); // Add class for colorful effect
+    recipeDiv.appendChild(button1);
 
+    button1.addEventListener('click', () => {
+      openRecipePopup(meal);
+      favoritePopup.style.display = 'none';
+    });
+    const button = document.createElement('button');
+    button.textContent = 'Remove from Favorites';
+    button.classList.add('colorful-button');
+    recipeDiv.appendChild(button);
 
+    button.addEventListener('click', () => {
+      removeFromFavorites(meal.idMeal);
+    });
+
+    favoriteRecipesContainer.appendChild(recipeDiv);
+  });
+};
+const removeFromFavorites = (id) => {
+  let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+  favorites = favorites.filter((meal) => meal.idMeal !== id);
+  localStorage.setItem('favorites', JSON.stringify(favorites));
+  displayFavoriteRecipes();
+};
